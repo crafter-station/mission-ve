@@ -25,6 +25,11 @@ export const env = createEnv({
     // Server-side pepper for hashing reporter phone numbers. We NEVER store raw numbers.
     REPORTER_HASH_SECRET: z.string().min(1, "REPORTER_HASH_SECRET is required"),
 
+    // Vercel Blob token — server-only. Enables photo uploads (evidence kept
+    // private-by-obscurity until a moderator publishes). When absent, photo
+    // support degrades gracefully (the upload UI is hidden).
+    BLOB_READ_WRITE_TOKEN: z.string().optional(),
+
     // Lightweight moderator gate (MVP). Swap for Supabase Auth later.
     MODERATOR_PASSWORD: z.string().min(1, "MODERATOR_PASSWORD is required"),
     MODERATOR_SESSION_SECRET: z
@@ -59,6 +64,7 @@ export const env = createEnv({
     WHATSAPP_APP_SECRET: process.env.WHATSAPP_APP_SECRET,
     WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN,
     REPORTER_HASH_SECRET: process.env.REPORTER_HASH_SECRET,
+    BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
     MODERATOR_PASSWORD: process.env.MODERATOR_PASSWORD,
     MODERATOR_SESSION_SECRET: process.env.MODERATOR_SESSION_SECRET,
     PUBLISH_THRESHOLD: process.env.PUBLISH_THRESHOLD,
