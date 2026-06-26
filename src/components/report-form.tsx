@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Camera,
   Check,
   Crosshair,
   ImagePlus,
@@ -74,7 +75,10 @@ export function ReportForm({ photosEnabled }: { photosEnabled: boolean }) {
   const [processing, setProcessing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [ticket, setTicket] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  // Separate inputs so mobile users get a real choice: open the camera, or
+  // pick from the gallery. (A single capture input would force the camera.)
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
 
   // Revoke object URLs on unmount to avoid leaks.
   useEffect(() => {
@@ -138,7 +142,9 @@ export function ReportForm({ photosEnabled }: { photosEnabled: boolean }) {
       setPhotos((prev) => [...prev, ...processed]);
     } finally {
       setProcessing(false);
-      if (fileRef.current) fileRef.current.value = "";
+      // Reset both inputs so re-selecting the same file still fires onChange.
+      if (cameraRef.current) cameraRef.current.value = "";
+      if (galleryRef.current) galleryRef.current.value = "";
     }
   }
 
@@ -408,46 +414,74 @@ export function ReportForm({ photosEnabled }: { photosEnabled: boolean }) {
                     {photos.length}/{MAX_PHOTOS} · opcional
                   </span>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {photos.map((p, i) => (
-                    <div
-                      key={p.url}
-                      className="group relative aspect-square overflow-hidden border border-border bg-background"
-                    >
-                      {/* biome-ignore lint/performance/noImgElement: local blob preview */}
-                      <img
-                        src={p.url}
-                        alt={`Adjunto ${i + 1}`}
-                        className="size-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removePhoto(i)}
-                        className="absolute right-1 top-1 flex size-7 items-center justify-center border border-border bg-background/90 text-muted-foreground transition-colors hover:text-foreground"
-                        aria-label="Quitar foto"
+                {photos.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {photos.map((p, i) => (
+                      <div
+                        key={p.url}
+                        className="group relative aspect-square overflow-hidden border border-border bg-background"
                       >
-                        <X className="size-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                  {photos.length < MAX_PHOTOS ? (
+                        {/* biome-ignore lint/performance/noImgElement: local blob preview */}
+                        <img
+                          src={p.url}
+                          alt={`Adjunto ${i + 1}`}
+                          className="size-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(i)}
+                          className="absolute right-1 top-1 flex size-7 items-center justify-center border border-border bg-background/90 text-muted-foreground transition-colors hover:text-foreground"
+                          aria-label="Quitar foto"
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                {photos.length < MAX_PHOTOS ? (
+                  <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
-                      onClick={() => fileRef.current?.click()}
+                      onClick={() => cameraRef.current?.click()}
                       disabled={processing}
-                      className="flex aspect-square flex-col items-center justify-center gap-1 border border-dashed border-border bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+                      className="flex min-h-11 items-center justify-center gap-2 border border-border bg-background px-3 text-[13px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent disabled:opacity-50"
+                    >
+                      {processing ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Camera className="size-4" />
+                      )}
+                      Tomar foto
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => galleryRef.current?.click()}
+                      disabled={processing}
+                      className="flex min-h-11 items-center justify-center gap-2 border border-border bg-background px-3 text-[13px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent disabled:opacity-50"
                     >
                       {processing ? (
                         <Loader2 className="size-4 animate-spin" />
                       ) : (
                         <ImagePlus className="size-4" />
                       )}
-                      <span className="text-[10px]">Añadir</span>
+                      Galería
                     </button>
-                  ) : null}
-                </div>
+                  </div>
+                ) : null}
+
+                {/* Camera capture (rear lens) vs. gallery multi-select. */}
                 <input
-                  ref={fileRef}
+                  ref={cameraRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  hidden
+                  onChange={(e) => addPhotos(e.target.files)}
+                />
+                <input
+                  ref={galleryRef}
                   type="file"
                   accept="image/*"
                   multiple
