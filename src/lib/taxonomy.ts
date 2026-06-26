@@ -126,10 +126,11 @@ export const MAP_MIN_ZOOM = 5;
 export const MAP_MAX_ZOOM = 19;
 
 /**
- * La Guaira — coastal epicenter. The default map view opens here at
- * city/street level so point detail is immediately visible.
+ * La Guaira — coastal epicenter. The default map view opens framing the
+ * La Guaira coastline through to Caracas, so the whole affected corridor and
+ * its point detail are visible at once.
  */
-export const LA_GUAIRA = { lat: 10.601, lng: -66.931, zoom: 13 };
+export const LA_GUAIRA = { lat: 10.565, lng: -66.925, zoom: 11.8 };
 
 export function estadoCentroid(
   name: string,
