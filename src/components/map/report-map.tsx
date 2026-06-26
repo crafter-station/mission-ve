@@ -3,7 +3,7 @@
 import "mapbox-gl/dist/mapbox-gl.css";
 import { Crosshair } from "lucide-react";
 import mapboxgl from "mapbox-gl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PublicReport } from "@/db/schema";
 import { env } from "@/env";
 import { PUBLIC_REPORTS_CHANNEL, type ReportEvent } from "@/lib/realtime";
@@ -13,6 +13,9 @@ import {
   CATEGORY_LABELS,
   CATEGORY_META,
   type Category,
+  categoryLabel,
+  categoryMeta,
+  isCategory,
   LA_GUAIRA,
   MAP_MAX_ZOOM,
   MAP_MIN_ZOOM,
@@ -26,6 +29,8 @@ mapboxgl.accessToken = env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 const DEFAULT_STYLE =
   env.NEXT_PUBLIC_MAP_STYLE_URL ?? "mapbox://styles/mapbox/dark-v11";
+
+const SOURCE_ID = "reports";
 
 function escapeHtml(s: string): string {
   return s.replace(
@@ -41,42 +46,75 @@ function escapeHtml(s: string): string {
   );
 }
 
-function markerEl(report: PublicReport): HTMLElement {
-  const meta = CATEGORY_META[(report.category as Category) ?? "other"];
-  const el = document.createElement("div");
-  el.style.cssText = `
-    display:flex;align-items:center;justify-content:center;
-    width:26px;height:26px;border-radius:9999px;cursor:pointer;
-    background:${meta.color};color:#fff;font-size:13px;line-height:1;
-    box-shadow:0 2px 6px rgba(0,0,0,.45);
-    border:2px solid rgba(255,255,255,.92);
-    transition:transform .12s ease;`;
-  el.textContent = meta.emoji;
-  el.title = report.summary ?? "";
-  el.addEventListener("mouseenter", () => {
-    el.style.transform = "scale(1.18)";
-  });
-  el.addEventListener("mouseleave", () => {
-    el.style.transform = "scale(1)";
-  });
-  return el;
+/** The category that drives a report's color/legend bucket. */
+function primaryKey(r: PublicReport): string {
+  return r.category ?? r.categories[0] ?? "other";
 }
 
-function popupHtml(r: PublicReport): string {
-  const cat = (r.category as Category) ?? "other";
-  const meta = CATEGORY_META[cat];
-  const sev = r.severity
-    ? (SEVERITY_LABELS[r.severity as Severity] ?? r.severity)
-    : null;
-  const loc = [r.parroquia, r.municipio, r.estado].filter(Boolean).join(", ");
+/** Which of the 7 canonical legend rows a report belongs to. */
+function legendCat(r: PublicReport): Category {
+  const k = primaryKey(r);
+  return isCategory(k) ? k : "other";
+}
+
+type Feature = GeoJSON.Feature<GeoJSON.Point, Record<string, string>>;
+
+/** Project the visible reports into a GeoJSON FeatureCollection for the source. */
+function toFeatureCollection(
+  reports: PublicReport[],
+  active: Set<Category>,
+): GeoJSON.FeatureCollection<GeoJSON.Point, Record<string, string>> {
+  const features: Feature[] = [];
+  for (const r of reports) {
+    if (r.lat == null || r.lng == null) continue;
+    if (!active.has(legendCat(r))) continue;
+    const key = primaryKey(r);
+    const meta = categoryMeta(key);
+    const sev = r.severity
+      ? (SEVERITY_LABELS[r.severity as Severity] ?? r.severity)
+      : "";
+    const loc = [r.parroquia, r.municipio, r.estado].filter(Boolean).join(", ");
+    // Properties must be primitive — the full category list rides as JSON.
+    const cats = (r.categories.length ? r.categories : [key]).map((c) => ({
+      label: categoryLabel(c),
+      color: categoryMeta(c).color,
+    }));
+    features.push({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [r.lng, r.lat] },
+      properties: {
+        id: r.id,
+        color: meta.color,
+        summary: r.summary ?? "",
+        sev,
+        loc,
+        cats: JSON.stringify(cats),
+      },
+    });
+  }
+  return { type: "FeatureCollection", features };
+}
+
+function popupHtml(props: Record<string, string>): string {
+  let cats: { label: string; color: string }[] = [];
+  try {
+    cats = JSON.parse(props.cats ?? "[]");
+  } catch {
+    cats = [];
+  }
+  const chips = cats
+    .map(
+      (c) =>
+        `<span class="mv-pop-chip"><span class="mv-pop-dot" style="background:${c.color}"></span>${escapeHtml(c.label)}</span>`,
+    )
+    .join("");
   return `
     <div class="mv-pop-title">
-      <span class="mv-pop-dot" style="background:${meta.color}"></span>
-      ${CATEGORY_LABELS[cat]}
-      ${sev ? `<span class="mv-pop-sev">· ${escapeHtml(sev)}</span>` : ""}
+      ${chips}
+      ${props.sev ? `<span class="mv-pop-sev">· ${escapeHtml(props.sev)}</span>` : ""}
     </div>
-    ${r.summary ? `<div class="mv-pop-body">${escapeHtml(r.summary)}</div>` : ""}
-    ${loc ? `<div class="mv-pop-loc">${escapeHtml(loc)}</div>` : ""}`;
+    ${props.summary ? `<div class="mv-pop-body">${escapeHtml(props.summary)}</div>` : ""}
+    ${props.loc ? `<div class="mv-pop-loc">${escapeHtml(props.loc)}</div>` : ""}`;
 }
 
 export function ReportMap({
@@ -86,25 +124,49 @@ export function ReportMap({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map());
+  const loadedRef = useRef(false);
   const [active, setActive] = useState<Set<Category>>(new Set(CATEGORIES));
   const [reports, setReports] = useState<PublicReport[]>(initialReports);
 
-  // Initialize the map once.
+  const data = useMemo(
+    () => toFeatureCollection(reports, active),
+    [reports, active],
+  );
+  // Keep latest data reachable from the one-time `load` handler.
+  const dataRef = useRef(data);
+  dataRef.current = data;
+
+  // Per-category counts for the legend (independent of the active filter).
+  const counts = useMemo(() => {
+    const c = {} as Record<Category, number>;
+    for (const cat of CATEGORIES) c[cat] = 0;
+    for (const r of reports) {
+      if (r.lat == null || r.lng == null) continue;
+      c[legendCat(r)]++;
+    }
+    return c;
+  }, [reports]);
+
+  const placed = useMemo(
+    () => reports.filter((r) => r.lat != null && r.lng != null).length,
+    [reports],
+  );
+
+  // Initialize the map once, wiring the clustered source + layers on load.
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: DEFAULT_STYLE,
-      // Open at the La Guaira epicenter, at street level.
       center: [LA_GUAIRA.lng, LA_GUAIRA.lat],
       zoom: LA_GUAIRA.zoom,
-      // Never let the view leave Venezuela.
       maxBounds: VENEZUELA_BOUNDS,
       minZoom: MAP_MIN_ZOOM,
       maxZoom: MAP_MAX_ZOOM,
       attributionControl: false,
     });
+    mapRef.current = map;
+
     map.addControl(
       new mapboxgl.AttributionControl({ compact: true }),
       "bottom-right",
@@ -113,12 +175,120 @@ export function ReportMap({
       new mapboxgl.NavigationControl({ showCompass: false }),
       "top-right",
     );
-    mapRef.current = map;
+
+    map.on("load", () => {
+      map.addSource(SOURCE_ID, {
+        type: "geojson",
+        data: dataRef.current,
+        cluster: true,
+        clusterRadius: 46,
+        clusterMaxZoom: 14,
+      });
+
+      // Cluster bubbles — neutral chrome; only individual points carry color.
+      map.addLayer({
+        id: "clusters",
+        type: "circle",
+        source: SOURCE_ID,
+        filter: ["has", "point_count"],
+        paint: {
+          "circle-color": "#1c1c1c",
+          "circle-stroke-color": "#3a3a3a",
+          "circle-stroke-width": 1,
+          "circle-radius": ["step", ["get", "point_count"], 15, 10, 20, 50, 27],
+        },
+      });
+      map.addLayer({
+        id: "cluster-count",
+        type: "symbol",
+        source: SOURCE_ID,
+        filter: ["has", "point_count"],
+        layout: {
+          "text-field": ["get", "point_count_abbreviated"],
+          "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+          "text-size": 12,
+        },
+        paint: { "text-color": "#f4f4f4" },
+      });
+
+      // Individual reports — colored by primary category, hairline white ring.
+      map.addLayer({
+        id: "points",
+        type: "circle",
+        source: SOURCE_ID,
+        filter: ["!", ["has", "point_count"]],
+        paint: {
+          "circle-color": ["get", "color"],
+          "circle-stroke-color": "rgba(255,255,255,0.92)",
+          "circle-stroke-width": 1.5,
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            6,
+            4,
+            12,
+            7,
+            16,
+            10,
+          ],
+        },
+      });
+
+      // Click a cluster → zoom to its expansion level.
+      map.on("click", "clusters", (e) => {
+        const f = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
+        const clusterId = f[0]?.properties?.cluster_id;
+        const src = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource;
+        if (clusterId == null || !src) return;
+        src.getClusterExpansionZoom(clusterId, (err, zoom) => {
+          if (err || zoom == null) return;
+          const geom = f[0].geometry as GeoJSON.Point;
+          map.easeTo({
+            center: geom.coordinates as [number, number],
+            zoom,
+            duration: 600,
+          });
+        });
+      });
+
+      // Click a point → popup built from its properties.
+      map.on("click", "points", (e) => {
+        const f = e.features?.[0];
+        if (!f) return;
+        const geom = f.geometry as GeoJSON.Point;
+        new mapboxgl.Popup({ offset: 14, closeButton: false })
+          .setLngLat(geom.coordinates as [number, number])
+          .setHTML(popupHtml(f.properties as Record<string, string>))
+          .addTo(map);
+      });
+
+      for (const layer of ["clusters", "points"]) {
+        map.on("mouseenter", layer, () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", layer, () => {
+          map.getCanvas().style.cursor = "";
+        });
+      }
+
+      loadedRef.current = true;
+    });
+
     return () => {
       map.remove();
       mapRef.current = null;
+      loadedRef.current = false;
     };
   }, []);
+
+  // Push fresh/filtered data into the source whenever it changes.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loadedRef.current) return;
+    const src = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource | undefined;
+    src?.setData(data);
+  }, [data]);
 
   // Live updates: append newly published reports as they happen.
   useEffect(() => {
@@ -143,55 +313,6 @@ export function ReportMap({
     };
   }, []);
 
-  const visible = useMemo(
-    () =>
-      reports.filter(
-        (r) =>
-          r.lat != null &&
-          r.lng != null &&
-          active.has((r.category as Category) ?? "other"),
-      ),
-    [reports, active],
-  );
-
-  // Per-category counts for the legend (independent of the active filter).
-  const counts = useMemo(() => {
-    const c = {} as Record<Category, number>;
-    for (const cat of CATEGORIES) c[cat] = 0;
-    for (const r of reports) {
-      if (r.lat == null || r.lng == null) continue;
-      c[(r.category as Category) ?? "other"]++;
-    }
-    return c;
-  }, [reports]);
-
-  // Reconcile markers with the visible set.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-    const markers = markersRef.current;
-    const next = new Set(visible.map((r) => r.id));
-
-    for (const [id, marker] of markers) {
-      if (!next.has(id)) {
-        marker.remove();
-        markers.delete(id);
-      }
-    }
-    for (const r of visible) {
-      if (markers.has(r.id) || r.lat == null || r.lng == null) continue;
-      const popup = new mapboxgl.Popup({
-        offset: 16,
-        closeButton: false,
-      }).setHTML(popupHtml(r));
-      const marker = new mapboxgl.Marker({ element: markerEl(r) })
-        .setLngLat([r.lng, r.lat])
-        .setPopup(popup)
-        .addTo(map);
-      markers.set(r.id, marker);
-    }
-  }, [visible]);
-
   function toggle(cat: Category) {
     setActive((prev) => {
       const next = new Set(prev);
@@ -201,21 +322,21 @@ export function ReportMap({
     });
   }
 
-  function focusLaGuaira() {
+  const focusLaGuaira = useCallback(() => {
     mapRef.current?.flyTo({
       center: [LA_GUAIRA.lng, LA_GUAIRA.lat],
       zoom: LA_GUAIRA.zoom,
       duration: 1200,
       essential: true,
     });
-  }
+  }, []);
 
-  function focusCountry() {
+  const focusCountry = useCallback(() => {
     mapRef.current?.fitBounds(VENEZUELA_BOUNDS, {
       padding: 32,
       duration: 1200,
     });
-  }
+  }, []);
 
   return (
     <div className="relative h-full w-full">
@@ -228,7 +349,7 @@ export function ReportMap({
             Capas
           </span>
           <span className="font-mono text-[10px] text-muted-foreground">
-            {visible.length}/{reports.length}
+            {data.features.length}/{placed}
           </span>
         </div>
         <div className="flex flex-col">
@@ -290,7 +411,7 @@ export function ReportMap({
           <span className="size-1.5 rounded-full bg-emerald-500" />
         </span>
         <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
-          {visible.length} en vivo
+          {data.features.length} en vivo
         </span>
       </div>
     </div>

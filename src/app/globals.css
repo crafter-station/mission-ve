@@ -222,10 +222,19 @@ body {
 .mv-pop-title {
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 5px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: -0.01em;
+}
+.mv-pop-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  padding: 1px 6px;
 }
 .mv-pop-dot {
   width: 8px;
