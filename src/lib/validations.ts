@@ -23,7 +23,14 @@ const lngSchema = z.number().min(-180).max(180);
  */
 export const webReportSchema = z.object({
   text: z.string().trim().min(3, "Cuéntanos qué está pasando").max(2000),
-  category: categorySchema.optional(),
+  // One report can touch several services at once (e.g. luz + agua), and a
+  // reporter may add a free-text category we don't have yet — moderators
+  // recategorize later, so we accept any short label, not just the enum.
+  categories: z
+    .array(z.string().trim().min(1).max(40))
+    .max(8)
+    .optional()
+    .transform((v) => (v ? Array.from(new Set(v)) : v)),
   estado: estadoSchema.optional(),
   municipio: z.string().trim().max(120).optional(),
   parroquia: z.string().trim().max(120).optional(),

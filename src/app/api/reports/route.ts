@@ -47,21 +47,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { text, category, estado, municipio, parroquia, lat, lng } =
+  const { text, categories, estado, municipio, parroquia, lat, lng } =
     parsed.data;
   const { id } = await ingestReport({
     source: "web",
     rawText: text,
-    // A web submitter may pre-tag category/location; moderators still confirm.
+    // A web submitter may pre-tag categories/location; moderators still confirm
+    // and assign the canonical primary category during structuring.
+    categories: categories ?? null,
     estado: estado ?? null,
     municipio: municipio ?? null,
     parroquia: parroquia ?? null,
     lat: lat ?? null,
     lng: lng ?? null,
   });
-
-  // Note: category from the form is a hint; it's applied during moderation.
-  void category;
 
   return Response.json({ id }, { status: 201 });
 }

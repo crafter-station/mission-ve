@@ -81,6 +81,7 @@ export async function moderateReport(
       report: {
         id,
         category: d.category,
+        categories: report.categories,
         severity: d.severity,
         summary: scrubPII(d.summary),
         estado: d.estado,
