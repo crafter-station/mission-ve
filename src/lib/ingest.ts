@@ -30,6 +30,8 @@ export type IngestInput = {
   reporterHash?: string | null;
   rawText?: string | null;
   mediaUrl?: string | null;
+  // Private storage paths of attached photos (internal-only evidence).
+  media?: string[] | null;
   // Reporter-supplied category hints (may include free-text labels).
   categories?: string[] | null;
   estado?: string | null;
@@ -69,6 +71,7 @@ export async function ingestReport(input: IngestInput): Promise<IngestResult> {
     reporterHash: input.reporterHash ?? null,
     rawText: input.rawText ?? null,
     mediaUrl: input.mediaUrl ?? null,
+    media: input.media ?? [],
     categories: input.categories ?? [],
     estado: input.estado ?? null,
     municipio: input.municipio ?? null,

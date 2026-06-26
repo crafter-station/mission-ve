@@ -32,6 +32,7 @@ export async function getPublicReports(
       parroquia: reports.parroquia,
       lat: reports.publicLat,
       lng: reports.publicLng,
+      media: reports.publicMedia,
       createdAt: reports.createdAt,
       publishedAt: reports.publishedAt,
     })

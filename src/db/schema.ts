@@ -35,6 +35,12 @@ export const reports = pgTable(
     rawText: text("raw_text"),
     // Internal-only link to any attached media (photo of a queue, outage, etc.).
     mediaUrl: text("media_url"),
+    // Internal-only storage paths (private bucket) of photos a reporter attached
+    // as supporting evidence. Visible only to moderators via signed URLs.
+    media: jsonb("media").$type<string[]>().notNull().default([]),
+    // Public URLs of the photos a moderator explicitly approved for the map
+    // (EXIF-stripped on upload). Empty until a moderator publishes one.
+    publicMedia: jsonb("public_media").$type<string[]>().notNull().default([]),
 
     // ── Structuring (filled by the crowd / moderators) ──
     // Primary category — moderator-assigned; drives the map color & filters.
@@ -123,6 +129,7 @@ export const PUBLIC_REPORT_COLUMNS = {
   parroquia: reports.parroquia,
   lat: reports.publicLat,
   lng: reports.publicLng,
+  media: reports.publicMedia,
   createdAt: reports.createdAt,
   publishedAt: reports.publishedAt,
 } as const;
@@ -139,6 +146,8 @@ export type PublicReport = {
   parroquia: string | null;
   lat: number | null;
   lng: number | null;
+  // Public, moderator-approved photo URLs (empty for most reports).
+  media: string[];
   createdAt: Date;
   publishedAt: Date | null;
 };
