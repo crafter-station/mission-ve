@@ -18,6 +18,8 @@ import {
   CATEGORIES,
   CATEGORY_LABELS,
   CATEGORY_META,
+  categoryLabel,
+  categoryMeta,
   ESTADO_NAMES,
   SEVERITIES,
   SEVERITY_LABELS,
@@ -27,7 +29,9 @@ const inputClass =
   "h-9 w-full border border-input bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40";
 
 export function ReportCard({ report }: { report: Report }) {
-  const [category, setCategory] = useState(report.category ?? "");
+  const [category, setCategory] = useState(
+    report.category ?? report.categories[0] ?? "",
+  );
   const [severity, setSeverity] = useState(report.severity ?? "");
   const [estado, setEstado] = useState(report.estado ?? "");
   const [municipio, setMunicipio] = useState(report.municipio ?? "");
@@ -96,6 +100,29 @@ export function ReportCard({ report }: { report: Report }) {
             {report.lat.toFixed(3)}, {report.lng.toFixed(3)} · se mostrará
             aproximada
           </p>
+        ) : null}
+
+        {/* Reporter-supplied category hints — click one to set the primary. */}
+        {report.categories.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+              Sugeridas
+            </span>
+            {report.categories.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setCategory(c)}
+                className="flex items-center gap-1.5 border border-border bg-background px-2 py-0.5 text-[12px] transition-colors hover:bg-accent"
+              >
+                <span
+                  className="size-2 shrink-0"
+                  style={{ backgroundColor: categoryMeta(c).color }}
+                />
+                {categoryLabel(c)}
+              </button>
+            ))}
+          </div>
         ) : null}
 
         <div className="grid grid-cols-2 gap-2">
