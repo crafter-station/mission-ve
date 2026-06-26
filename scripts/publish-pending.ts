@@ -15,7 +15,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { reports } from "../src/db/schema";
 import { coarsenCoords, scrubPII } from "../src/lib/privacy";
-import { estadoCentroid } from "../src/lib/taxonomy";
+import { type Category, estadoCentroid, isCategory } from "../src/lib/taxonomy";
 
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error("DATABASE_URL is not set");
@@ -42,13 +42,15 @@ for (const r of pending) {
   const coords =
     r.lat != null && r.lng != null
       ? coarsenCoords(r.lat, r.lng)
-      : (r.estado ? estadoCentroid(r.estado) : null) ?? { lat: null, lng: null };
+      : ((r.estado ? estadoCentroid(r.estado) : null) ?? {
+          lat: null,
+          lng: null,
+        });
 
-  // Category: keep an existing one, else first reporter-supplied hint, else "other".
-  const category =
-    r.category ??
-    (r.categories?.[0] as typeof r.category) ??
-    ("other" as typeof r.category);
+  // Category: keep an existing one, else first valid reporter-supplied hint, else "other".
+  const hint = r.categories?.[0];
+  const category: Category =
+    r.category ?? (hint && isCategory(hint) ? hint : "other");
 
   await db
     .update(reports)
