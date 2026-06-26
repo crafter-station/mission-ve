@@ -25,7 +25,7 @@ export function Brand({
           Misión Venezuela
         </div>
         {tagline ? (
-          <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+          <div className="hidden font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground min-[380px]:block">
             {tagline}
           </div>
         ) : null}

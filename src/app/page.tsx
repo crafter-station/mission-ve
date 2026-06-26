@@ -13,13 +13,23 @@ export default async function Home() {
 
   return (
     <main className="relative flex h-screen flex-col overflow-hidden">
-      <header className="z-20 flex h-14 items-center justify-between border-b border-border bg-sidebar px-4">
+      <header className="z-20 flex h-14 items-center justify-between gap-2 border-b border-border bg-sidebar px-3 sm:px-4">
         <Brand href={null} />
         <div className="flex items-center gap-1.5">
-          <Button asChild size="sm" variant="ghost">
+          <Button
+            asChild
+            size="sm"
+            variant="ghost"
+            className="hidden sm:inline-flex"
+          >
             <Link href="/acerca">Acerca</Link>
           </Button>
-          <Button asChild size="sm" variant="outline">
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="hidden sm:inline-flex"
+          >
             <Link href="/moderation">Consola</Link>
           </Button>
           <Button asChild size="sm">
