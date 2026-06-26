@@ -15,7 +15,7 @@ let cachedClient: ReturnType<typeof createClient> | null = null;
 function supabaseClient() {
   cachedClient ??= createClient(
     env.NEXT_PUBLIC_SUPABASE_URL,
-    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY,
   );
   return cachedClient;
 }
@@ -26,16 +26,17 @@ export type ReportEvent =
   | { type: "report:published"; report: PublicReport }
   | { type: "report:removed"; id: string };
 
-/** Push an event to every connected map client. Best-effort. */
+/**
+ * Push an event to every connected map client. Best-effort.
+ *
+ * Uses `httpSend` (REST) for the broadcast — same as pawboard's server-side
+ * broadcast helper — so a serverless function never needs to open a WebSocket.
+ */
 export async function broadcastReportEvent(event: ReportEvent): Promise<void> {
   try {
     const supabase = supabaseClient();
     const channel = supabase.channel(PUBLIC_REPORTS_CHANNEL);
-    await channel.send({
-      type: "broadcast",
-      event: "report-event",
-      payload: event,
-    });
+    await channel.httpSend("report-event", event);
     await supabase.removeChannel(channel);
   } catch (err) {
     console.error("[realtime] broadcast failed:", err);

@@ -18,21 +18,14 @@ const globalForDb = globalThis as unknown as {
 };
 
 function createDb(): DB {
-  // Local Supabase uses port 54322; production uses the pooler (6543).
-  const isLocalSupabase = env.DATABASE_URL.includes(":54322");
+  // Supabase Cloud only. DATABASE_URL is the connection-pooler string (6543,
+  // transaction mode) — which requires `prepare: false`.
   const isProduction = process.env.NODE_ENV === "production";
-
-  const connectionString =
-    isLocalSupabase || env.DATABASE_URL.includes("pgbouncer=true")
-      ? env.DATABASE_URL
-      : env.DATABASE_URL.includes("?")
-        ? `${env.DATABASE_URL}&pgbouncer=true`
-        : `${env.DATABASE_URL}?pgbouncer=true`;
 
   const client =
     globalForDb.client ??
-    postgres(connectionString, {
-      prepare: false, // Required for transaction pooling mode.
+    postgres(env.DATABASE_URL, {
+      prepare: false, // Required for Supabase's transaction pooling mode.
       max: isProduction ? 1 : 10,
       idle_timeout: isProduction ? 0 : 20,
       connect_timeout: 10,
@@ -42,10 +35,14 @@ function createDb(): DB {
   return drizzle(client, { schema });
 }
 
+function getDb(): DB {
+  globalForDb.db ??= createDb();
+  return globalForDb.db;
+}
+
 /** Proxy that initializes the real client on first property access. */
 export const db: DB = new Proxy({} as DB, {
   get(_target, prop, receiver) {
-    const instance = (globalForDb.db ??= createDb());
-    return Reflect.get(instance, prop, receiver);
+    return Reflect.get(getDb(), prop, receiver);
   },
 });

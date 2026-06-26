@@ -36,7 +36,9 @@ export const env = createEnv({
 
   client: {
     NEXT_PUBLIC_SUPABASE_URL: z.string().url("Invalid Supabase URL"),
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: z
+    // NOTE: must be the ANON JWT (the sb_publishable_ key does NOT work with
+    // Supabase Realtime). Same convention as the pawboard project.
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY: z
       .string()
       .min(1, "Supabase anon key is required"),
     // Optional MapLibre style URL (defaults to a free demo style in code).
@@ -56,7 +58,8 @@ export const env = createEnv({
     MODERATOR_SESSION_SECRET: process.env.MODERATOR_SESSION_SECRET,
     PUBLISH_THRESHOLD: process.env.PUBLISH_THRESHOLD,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY:
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY,
     NEXT_PUBLIC_MAP_STYLE_URL: process.env.NEXT_PUBLIC_MAP_STYLE_URL,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   },
