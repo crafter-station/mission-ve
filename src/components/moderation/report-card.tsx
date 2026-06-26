@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin } from "lucide-react";
+import { Check, MapPin } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { moderateReport, rejectReport } from "@/app/moderation/actions";
@@ -24,11 +24,18 @@ import {
   SEVERITIES,
   SEVERITY_LABELS,
 } from "@/lib/taxonomy";
+import { cn } from "@/lib/utils";
 
 const inputClass =
   "h-9 w-full border border-input bg-background px-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40";
 
-export function ReportCard({ report }: { report: Report }) {
+export function ReportCard({
+  report,
+  mediaUrls = [],
+}: {
+  report: Report;
+  mediaUrls?: string[];
+}) {
   const [category, setCategory] = useState(
     report.category ?? report.categories[0] ?? "",
   );
@@ -38,13 +45,27 @@ export function ReportCard({ report }: { report: Report }) {
   const [summary, setSummary] = useState(
     report.summary ?? report.rawText ?? "",
   );
+  // Indices of attached photos the moderator marked to publish on the map.
+  const [publish, setPublish] = useState<Set<number>>(new Set());
   const [pending, startTransition] = useTransition();
+
+  function togglePublish(i: number) {
+    setPublish((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  }
 
   function verify() {
     if (!category || !severity || !estado || summary.trim().length < 3) {
       toast.error("Completa categoría, severidad, estado y resumen.");
       return;
     }
+    const publishMedia = Array.from(publish)
+      .map((i) => report.media[i])
+      .filter(Boolean);
     startTransition(async () => {
       const res = await moderateReport(report.id, {
         category,
@@ -54,6 +75,7 @@ export function ReportCard({ report }: { report: Report }) {
         municipio: municipio || undefined,
         lat: report.lat ?? undefined,
         lng: report.lng ?? undefined,
+        publishMedia: publishMedia.length ? publishMedia : undefined,
       });
       if (res.ok) toast.success(`${report.id} confirmado.`);
       else toast.error(res.error);
@@ -99,6 +121,59 @@ export function ReportCard({ report }: { report: Report }) {
             <MapPin className="size-3" />
             {report.lat.toFixed(3)}, {report.lng.toFixed(3)} · se mostrará
             aproximada
+          </p>
+        ) : null}
+
+        {/* Attached photos — private. Tap to mark which ones to publish. */}
+        {mediaUrls.length > 0 ? (
+          <div className="space-y-1.5">
+            <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+              Fotos · marca las que publicar
+            </span>
+            <div className="grid grid-cols-3 gap-2">
+              {mediaUrls.map((url, i) => {
+                const on = publish.has(i);
+                return (
+                  <button
+                    key={url}
+                    type="button"
+                    onClick={() => togglePublish(i)}
+                    className={cn(
+                      "group relative aspect-square overflow-hidden border bg-background",
+                      on ? "border-emerald-500" : "border-border",
+                    )}
+                  >
+                    {/* biome-ignore lint/performance/noImgElement: signed preview */}
+                    <img
+                      src={url}
+                      alt={`Adjunto ${i + 1}`}
+                      className="size-full object-cover"
+                    />
+                    <span
+                      className={cn(
+                        "absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 py-1 font-mono text-[9px] uppercase tracking-wide",
+                        on
+                          ? "bg-emerald-500 text-black"
+                          : "bg-background/85 text-muted-foreground",
+                      )}
+                    >
+                      {on ? (
+                        <>
+                          <Check className="size-3" /> Publicar
+                        </>
+                      ) : (
+                        "Privada"
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : report.media.length > 0 ? (
+          <p className="font-mono text-[11px] text-muted-foreground">
+            {report.media.length} foto(s) adjunta(s) · vista previa no
+            disponible
           </p>
         ) : null}
 

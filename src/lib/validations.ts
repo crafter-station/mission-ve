@@ -53,6 +53,9 @@ export const moderateReportSchema = z.object({
   lat: latSchema.optional(),
   lng: lngSchema.optional(),
   note: z.string().trim().max(500).optional(),
+  // Subset of the report's private media paths the moderator approved to
+  // publish on the public map pin.
+  publishMedia: z.array(z.string().trim().min(1)).max(3).optional(),
 });
 export type ModerateReportInput = z.infer<typeof moderateReportSchema>;
 

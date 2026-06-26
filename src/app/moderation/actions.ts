@@ -48,6 +48,13 @@ export async function moderateReport(
   const now = new Date();
   const willPublish = reachedThreshold;
 
+  // Expose only the moderator-approved photos on the public pin. We honor just
+  // the URLs that belong to this report, so nothing arbitrary can be exposed.
+  const approved = (d.publishMedia ?? []).filter((p) =>
+    report.media.includes(p),
+  );
+  const publicMedia = Array.from(new Set([...report.publicMedia, ...approved]));
+
   await db
     .update(reports)
     .set({
@@ -61,6 +68,7 @@ export async function moderateReport(
       lng: d.lng ?? report.lng,
       publicLat: publicCoords.lat,
       publicLng: publicCoords.lng,
+      publicMedia,
       verifiedBy,
       moderatorNote: d.note ?? report.moderatorNote,
       status: willPublish ? "published" : "verified",
@@ -89,6 +97,7 @@ export async function moderateReport(
         parroquia: d.parroquia ?? null,
         lat: publicCoords.lat,
         lng: publicCoords.lng,
+        media: publicMedia,
         createdAt: report.createdAt,
         publishedAt: now,
       },

@@ -86,7 +86,11 @@ export default async function ModerationPage() {
         ) : (
           <div className="flex flex-col gap-3">
             {queue.map((report) => (
-              <ReportCard key={report.id} report={report} />
+              <ReportCard
+                key={report.id}
+                report={report}
+                mediaUrls={report.media}
+              />
             ))}
           </div>
         )}
