@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 mapboxgl.accessToken = env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 const DEFAULT_STYLE =
-  env.NEXT_PUBLIC_MAP_STYLE_URL ?? "mapbox://styles/mapbox/light-v11";
+  env.NEXT_PUBLIC_MAP_STYLE_URL ?? "mapbox://styles/mapbox/dark-v11";
 
 function escapeHtml(s: string): string {
   return s.replace(

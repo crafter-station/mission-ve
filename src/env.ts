@@ -45,8 +45,8 @@ export const env = createEnv({
     NEXT_PUBLIC_MAPBOX_TOKEN: z
       .string()
       .min(1, "NEXT_PUBLIC_MAPBOX_TOKEN is required"),
-    // Mapbox style URL. Defaults to mapbox://styles/mapbox/light-v11 in code.
-    // Swap to dark-v11 or satellite-streets-v12 without touching code.
+    // Mapbox style URL. Defaults to mapbox://styles/mapbox/dark-v11 in code.
+    // Swap to light-v11 or satellite-streets-v12 without touching code.
     NEXT_PUBLIC_MAP_STYLE_URL: z.string().min(1).optional(),
     NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
   },

@@ -161,9 +161,9 @@ body {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * Mapbox GL — re-skin controls + popups to match the dark monochrome chrome.
- * Dark floating UI over the light basemap. Scoped under `.dark` (the <html>
- * class) so specificity beats Mapbox's single-class rules without !important.
+ * Mapbox GL — re-skin controls + popups to match the dark monochrome chrome
+ * over the dark basemap. Scoped under `.dark` (the <html> class) so specificity
+ * beats Mapbox's single-class rules without !important.
  * ────────────────────────────────────────────────────────────────────────── */
 .dark .mapboxgl-ctrl-group {
   background: var(--popover);
