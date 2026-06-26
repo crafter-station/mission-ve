@@ -1,7 +1,9 @@
+import { Megaphone } from "lucide-react";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { GithubBadge } from "@/components/github-badge";
 import { ReportMap } from "@/components/map/report-map";
+import { QrShare } from "@/components/qr-share";
 import { Button } from "@/components/ui/button";
 import { getPublicReports } from "@/db/queries";
 
@@ -34,8 +36,12 @@ export default async function Home() {
           >
             <Link href="/moderation">Consola</Link>
           </Button>
-          <Button asChild size="sm">
-            <Link href="/reportar">Reportar</Link>
+          <QrShare />
+          <Button asChild size="default" className="font-semibold shadow-sm">
+            <Link href="/reportar">
+              <Megaphone className="size-4" />
+              Reportar
+            </Link>
           </Button>
         </div>
       </header>

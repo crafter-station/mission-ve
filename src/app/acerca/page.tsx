@@ -1,6 +1,7 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Megaphone } from "lucide-react";
 import Link from "next/link";
 import { GithubBadge } from "@/components/github-badge";
+import { QrShare } from "@/components/qr-share";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 
@@ -39,8 +40,12 @@ export default function AcercaPage() {
             <Button asChild size="sm" variant="ghost">
               <Link href="/">Mapa</Link>
             </Button>
-            <Button asChild size="sm">
-              <Link href="/reportar">Reportar</Link>
+            <QrShare />
+            <Button asChild size="default" className="font-semibold shadow-sm">
+              <Link href="/reportar">
+                <Megaphone className="size-4" />
+                Reportar
+              </Link>
             </Button>
           </>
         }
