@@ -108,8 +108,28 @@ export const ESTADOS = [
 export const ESTADO_NAMES = ESTADOS.map((e) => e.name);
 export type EstadoName = (typeof ESTADOS)[number]["name"];
 
-/** Geographic center of Venezuela — default map view. */
+/** Geographic center of Venezuela — used when showing the whole country. */
 export const VENEZUELA_CENTER = { lat: 7.5, lng: -66.0, zoom: 5.2 };
+
+/**
+ * Map pan limits, as Mapbox [[swLng, swLat], [neLng, neLat]]. Constrains the
+ * map to Venezuela (plus a little padding) so you can never drift away from
+ * the country.
+ */
+export const VENEZUELA_BOUNDS: [[number, number], [number, number]] = [
+  [-74.5, 0.0],
+  [-59.0, 13.2],
+];
+
+/** Zoom range: country overview ↔ street level. */
+export const MAP_MIN_ZOOM = 5;
+export const MAP_MAX_ZOOM = 19;
+
+/**
+ * La Guaira — coastal epicenter. The default map view opens here at
+ * city/street level so point detail is immediately visible.
+ */
+export const LA_GUAIRA = { lat: 10.601, lng: -66.931, zoom: 13 };
 
 export function estadoCentroid(
   name: string,
