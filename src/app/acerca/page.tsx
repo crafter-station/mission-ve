@@ -110,9 +110,9 @@ export default function AcercaPage() {
             contribuir en{" "}
             <a
               className="text-foreground underline underline-offset-4 hover:opacity-80"
-              href="https://github.com/crafter-station/mission-ve"
+              href="https://github.com/crafter-station/reporte-ve"
             >
-              github.com/crafter-station/mission-ve
+              github.com/crafter-station/reporte-ve
             </a>
             .
           </p>

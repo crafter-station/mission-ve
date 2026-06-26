@@ -104,7 +104,7 @@ clustering, NGO export feeds (CSV/RSS), and Telegram intake.
 ## Contributing
 
 Issues and PRs welcome at
-[crafter-station/mission-ve](https://github.com/crafter-station/mission-ve).
+[crafter-station/reporte-ve](https://github.com/crafter-station/reporte-ve).
 Run `bun run check` (Biome) and `bunx tsc --noEmit` before pushing.
 
 ## License

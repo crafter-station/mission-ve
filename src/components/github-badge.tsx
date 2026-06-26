@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-export const REPO_URL = "https://github.com/crafter-station/mission-ve";
+export const REPO_URL = "https://github.com/crafter-station/reporte-ve";
 
 /** GitHub mark — lucide dropped brand glyphs, so we inline the official path. */
 function GithubGlyph({ className }: { className?: string }) {
