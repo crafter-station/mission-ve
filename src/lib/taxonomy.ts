@@ -97,7 +97,10 @@ export type Source = (typeof SOURCES)[number];
 // ── Venezuela first-level divisions (23 estados + Distrito Capital) ─────────
 // Approximate capital/centroid coords used to default the map view and to
 // snap public pins to a coarse location when a precise one isn't safe to show.
+// La Guaira leads the list — it's the earthquake epicenter and the default
+// focus of the map — the rest follow alphabetically.
 export const ESTADOS = [
+  { name: "La Guaira", lat: 10.6, lng: -66.93 },
   { name: "Amazonas", lat: 5.66, lng: -67.62 },
   { name: "Anzoátegui", lat: 10.13, lng: -64.68 },
   { name: "Apure", lat: 7.89, lng: -67.47 },
@@ -110,7 +113,6 @@ export const ESTADOS = [
   { name: "Distrito Capital", lat: 10.5, lng: -66.92 },
   { name: "Falcón", lat: 11.4, lng: -69.67 },
   { name: "Guárico", lat: 9.92, lng: -67.35 },
-  { name: "La Guaira", lat: 10.6, lng: -66.93 },
   { name: "Lara", lat: 10.07, lng: -69.32 },
   { name: "Mérida", lat: 8.6, lng: -71.14 },
   { name: "Miranda", lat: 10.31, lng: -66.85 },
