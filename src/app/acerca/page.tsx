@@ -4,7 +4,7 @@ import { GithubBadge } from "@/components/github-badge";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 
-export const metadata = { title: "Acerca · Misión Venezuela" };
+export const metadata = { title: "Acerca · Reporte VE" };
 
 const PIPELINE = [
   "Ingreso",
@@ -53,8 +53,8 @@ export default function AcercaPage() {
             Un mapa ciudadano, abierto y privado por diseño.
           </h1>
           <p className="text-[15px] leading-relaxed text-muted-foreground">
-            Misión Venezuela reúne reportes de la población para mapear cortes
-            de electricidad y agua, y la escasez de medicinas, alimentos y
+            Reporte VE reúne reportes de la población para mapear cortes de
+            electricidad y agua, y la escasez de medicinas, alimentos y
             combustible en todo el país — sin exponer a quien reporta.
           </p>
         </div>

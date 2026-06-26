@@ -1,5 +1,5 @@
 /**
- * Seed sample published reports — Misión Venezuela.
+ * Seed sample published reports — Reporte VE.
  *
  * Populates the public map with realistic, PII-free demo points so the
  * clustering, category colors, and multi-category popups can be evaluated.

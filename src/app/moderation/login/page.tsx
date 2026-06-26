@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { MissionMark } from "@/components/mission-mark";
+import { BrandMark } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { checkPassword, createSession, getModerator } from "@/lib/auth";
 
-export const metadata = { title: "Acceso de voluntarios · Misión Venezuela" };
+export const metadata = { title: "Acceso de voluntarios · Reporte VE" };
 
 async function login(formData: FormData) {
   "use server";
@@ -35,7 +35,7 @@ export default async function LoginPage({
       <div className="w-full max-w-[380px]">
         <div className="mb-8 flex flex-col items-center gap-4 text-center">
           <div className="flex size-11 items-center justify-center border border-border text-foreground">
-            <MissionMark className="size-6" />
+            <BrandMark className="size-6" />
           </div>
           <div className="space-y-1">
             <h1 className="text-[20px] font-medium tracking-tight">

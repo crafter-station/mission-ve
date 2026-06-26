@@ -1,5 +1,5 @@
 /**
- * Misión Venezuela — domain taxonomy.
+ * Reporte VE — domain taxonomy.
  *
  * Single source of truth for report categories, severity, workflow status, and
  * Venezuela's first-level administrative divisions. The DB schema, Zod

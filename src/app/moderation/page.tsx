@@ -7,7 +7,7 @@ import { getQueue, getStatusCounts } from "@/db/queries";
 import { destroySession, getModerator } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Consola de moderación · Misión Venezuela" };
+export const metadata = { title: "Consola de moderación · Reporte VE" };
 
 async function logout() {
   "use server";

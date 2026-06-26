@@ -1,16 +1,16 @@
 /**
- * Misión Venezuela mark — a map pin rendered as a square-cornered diamond with
- * a beacon dot at its heart and a short stem grounding it to a location.
- * Monochrome line art in `currentColor`, square caps to match the sharp-
- * cornered design system. A located signal, not a flag.
+ * Brand mark — a map pin rendered as a square-cornered diamond with a beacon
+ * dot at its heart and a short stem grounding it to a location. Monochrome line
+ * art in `currentColor`, square caps to match the sharp-cornered design system.
+ * A located signal, not a flag.
  */
-export function MissionMark({ className }: { className?: string }) {
+export function BrandMark({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
       className={className}
       role="img"
-      aria-label="Misión Venezuela"
+      aria-label="Reporte VE"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.6"

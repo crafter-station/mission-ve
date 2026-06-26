@@ -20,20 +20,20 @@ const DESCRIPTION =
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "Misión Venezuela · Mapa ciudadano de servicios",
+  title: "Reporte VE · Mapa ciudadano de servicios",
   description: DESCRIPTION,
   openGraph: {
-    title: "Misión Venezuela",
+    title: "Reporte VE",
     description: DESCRIPTION,
     url: SITE_URL,
-    siteName: "Misión Venezuela",
+    siteName: "Reporte VE",
     locale: "es_VE",
     type: "website",
     images: [{ url: "/og.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Misión Venezuela",
+    title: "Reporte VE",
     description: DESCRIPTION,
     images: ["/og-twitter.png"],
   },

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MissionMark } from "@/components/mission-mark";
+import { BrandMark } from "@/components/brand-mark";
 import { cn } from "@/lib/utils";
 
 /**
@@ -18,11 +18,11 @@ export function Brand({
   const inner = (
     <div className={cn("flex items-center gap-2.5", className)}>
       <div className="flex size-9 items-center justify-center border border-border bg-background text-foreground">
-        <MissionMark className="size-[18px]" />
+        <BrandMark className="size-[18px]" />
       </div>
       <div className="leading-tight">
         <div className="text-[13px] font-medium tracking-tight text-foreground">
-          Misión Venezuela
+          Reporte VE
         </div>
         {tagline ? (
           <div className="hidden font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground min-[380px]:block">
