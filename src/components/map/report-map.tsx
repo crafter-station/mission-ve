@@ -24,6 +24,7 @@ import {
   type Severity,
   VENEZUELA_BOUNDS,
 } from "@/lib/taxonomy";
+import { useGeolocation } from "@/lib/use-geolocation";
 import { cn } from "@/lib/utils";
 
 mapboxgl.accessToken = env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -140,8 +141,11 @@ export function ReportMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const loadedRef = useRef(false);
+  const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const [active, setActive] = useState<Set<Category>>(new Set(CATEGORIES));
   const [reports, setReports] = useState<PublicReport[]>(initialReports);
+  // Prompt for the visitor's location as soon as the map loads.
+  const { coords: userCoords } = useGeolocation();
 
   const data = useMemo(
     () => toFeatureCollection(reports, active),
@@ -293,6 +297,7 @@ export function ReportMap({
     return () => {
       map.remove();
       mapRef.current = null;
+      userMarkerRef.current = null;
       loadedRef.current = false;
     };
   }, []);
@@ -327,6 +332,41 @@ export function ReportMap({
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // Drop a "you are here" dot and fly to the visitor once their location is
+  // known — but only if they're inside Venezuela (diaspora users keep the
+  // country overview, since the map is bounded to the country anyway).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !userCoords) return;
+
+    const [[west, south], [east, north]] = VENEZUELA_BOUNDS;
+    const inCountry =
+      userCoords.lng >= west &&
+      userCoords.lng <= east &&
+      userCoords.lat >= south &&
+      userCoords.lat <= north;
+    if (!inCountry) return;
+
+    const place = () => {
+      const lngLat: [number, number] = [userCoords.lng, userCoords.lat];
+      if (userMarkerRef.current) {
+        userMarkerRef.current.setLngLat(lngLat);
+      } else {
+        const el = document.createElement("div");
+        el.setAttribute("aria-label", "Tu ubicación");
+        el.style.cssText =
+          "width:16px;height:16px;border-radius:9999px;background:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,0.25),0 0 0 1.5px rgba(255,255,255,0.9);";
+        userMarkerRef.current = new mapboxgl.Marker({ element: el })
+          .setLngLat(lngLat)
+          .addTo(map);
+      }
+      map.flyTo({ center: lngLat, zoom: 12, duration: 1500, essential: true });
+    };
+
+    if (loadedRef.current) place();
+    else map.once("load", place);
+  }, [userCoords]);
 
   function toggle(cat: Category) {
     setActive((prev) => {

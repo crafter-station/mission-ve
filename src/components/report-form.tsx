@@ -30,6 +30,7 @@ import {
   categoryMeta,
   ESTADO_NAMES,
 } from "@/lib/taxonomy";
+import { useGeolocation } from "@/lib/use-geolocation";
 import { cn } from "@/lib/utils";
 
 const MAX_PHOTOS = 3;
@@ -68,9 +69,14 @@ export function ReportForm({ photosEnabled }: { photosEnabled: boolean }) {
   const [categories, setCategories] = useState<string[]>([]);
   const [customCat, setCustomCat] = useState("");
   const [estado, setEstado] = useState<string>("");
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
-    null,
-  );
+  // Prompts for location immediately on mount (or reuses the coords already
+  // captured on the map). Optional, but we surface it up front because it's the
+  // most valuable field for a report.
+  const {
+    coords,
+    status: geoStatus,
+    request: requestLocation,
+  } = useGeolocation();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [processing, setProcessing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -88,17 +94,17 @@ export function ReportForm({ photosEnabled }: { photosEnabled: boolean }) {
   }, [photos]);
 
   function locate() {
-    if (!navigator.geolocation) {
+    if (geoStatus === "denied") {
+      toast.error(
+        "Ubicación bloqueada. Actívala en los permisos del navegador.",
+      );
+      return;
+    }
+    if (geoStatus === "unavailable") {
       toast.error("Tu navegador no permite ubicación.");
       return;
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        toast.success("Ubicación añadida (se mostrará de forma aproximada).");
-      },
-      () => toast.error("No pudimos obtener tu ubicación."),
-    );
+    requestLocation();
   }
 
   function toggleCategory(c: string) {
@@ -164,7 +170,8 @@ export function ReportForm({ photosEnabled }: { photosEnabled: boolean }) {
     setCategories([]);
     setCustomCat("");
     setEstado("");
-    setCoords(null);
+    // Location persists across reports (cached for the session) so a reporter
+    // filing several reports from one place isn't re-prompted each time.
     setPhotos([]);
   }
 
@@ -503,13 +510,19 @@ export function ReportForm({ photosEnabled }: { photosEnabled: boolean }) {
             >
               {coords ? (
                 <MapPin className="size-4 text-emerald-500" />
+              ) : geoStatus === "prompting" ? (
+                <Loader2 className="size-4 animate-spin" />
               ) : (
                 <Crosshair className="size-4" />
               )}
               <span className="flex-1">
                 {coords
                   ? "Ubicación añadida"
-                  : "Añadir mi ubicación (opcional)"}
+                  : geoStatus === "prompting"
+                    ? "Obteniendo ubicación…"
+                    : geoStatus === "denied"
+                      ? "Activar mi ubicación"
+                      : "Añadir mi ubicación (opcional)"}
               </span>
               {coords ? <Check className="size-3.5 text-emerald-500" /> : null}
             </button>
