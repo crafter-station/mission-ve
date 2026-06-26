@@ -259,3 +259,17 @@ body {
   font-size: 11px;
   color: var(--muted-foreground);
 }
+.mv-pop-media {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  max-width: 220px;
+}
+.mv-pop-img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  display: block;
+}

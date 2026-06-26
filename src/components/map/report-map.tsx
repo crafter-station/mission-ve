@@ -90,31 +90,45 @@ function toFeatureCollection(
         sev,
         loc,
         cats: JSON.stringify(cats),
+        media: JSON.stringify(r.media ?? []),
       },
     });
   }
   return { type: "FeatureCollection", features };
 }
 
-function popupHtml(props: Record<string, string>): string {
-  let cats: { label: string; color: string }[] = [];
+function safeParse<T>(raw: string | undefined, fallback: T): T {
   try {
-    cats = JSON.parse(props.cats ?? "[]");
+    return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
-    cats = [];
+    return fallback;
   }
+}
+
+function popupHtml(props: Record<string, string>): string {
+  const cats = safeParse<{ label: string; color: string }[]>(props.cats, []);
+  const media = safeParse<string[]>(props.media, []);
   const chips = cats
     .map(
       (c) =>
         `<span class="mv-pop-chip"><span class="mv-pop-dot" style="background:${c.color}"></span>${escapeHtml(c.label)}</span>`,
     )
     .join("");
+  const photos = media.length
+    ? `<div class="mv-pop-media">${media
+        .map(
+          (url) =>
+            `<img src="${encodeURI(url)}" alt="" loading="lazy" class="mv-pop-img" />`,
+        )
+        .join("")}</div>`
+    : "";
   return `
     <div class="mv-pop-title">
       ${chips}
       ${props.sev ? `<span class="mv-pop-sev">· ${escapeHtml(props.sev)}</span>` : ""}
     </div>
     ${props.summary ? `<div class="mv-pop-body">${escapeHtml(props.summary)}</div>` : ""}
+    ${photos}
     ${props.loc ? `<div class="mv-pop-loc">${escapeHtml(props.loc)}</div>` : ""}`;
 }
 
