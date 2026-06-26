@@ -1,6 +1,7 @@
 "use client";
 
 import "mapbox-gl/dist/mapbox-gl.css";
+import type { FeatureCollection, Feature as GeoFeature, Point } from "geojson";
 import { Crosshair } from "lucide-react";
 import mapboxgl from "mapbox-gl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -57,14 +58,14 @@ function legendCat(r: PublicReport): Category {
   return isCategory(k) ? k : "other";
 }
 
-type Feature = GeoJSON.Feature<GeoJSON.Point, Record<string, string>>;
+type PointFeature = GeoFeature<Point, Record<string, string>>;
 
 /** Project the visible reports into a GeoJSON FeatureCollection for the source. */
 function toFeatureCollection(
   reports: PublicReport[],
   active: Set<Category>,
-): GeoJSON.FeatureCollection<GeoJSON.Point, Record<string, string>> {
-  const features: Feature[] = [];
+): FeatureCollection<Point, Record<string, string>> {
+  const features: PointFeature[] = [];
   for (const r of reports) {
     if (r.lat == null || r.lng == null) continue;
     if (!active.has(legendCat(r))) continue;
@@ -243,7 +244,7 @@ export function ReportMap({
         if (clusterId == null || !src) return;
         src.getClusterExpansionZoom(clusterId, (err, zoom) => {
           if (err || zoom == null) return;
-          const geom = f[0].geometry as GeoJSON.Point;
+          const geom = f[0].geometry as Point;
           map.easeTo({
             center: geom.coordinates as [number, number],
             zoom,
@@ -256,7 +257,7 @@ export function ReportMap({
       map.on("click", "points", (e) => {
         const f = e.features?.[0];
         if (!f) return;
-        const geom = f.geometry as GeoJSON.Point;
+        const geom = f.geometry as Point;
         new mapboxgl.Popup({ offset: 14, closeButton: false })
           .setLngLat(geom.coordinates as [number, number])
           .setHTML(popupHtml(f.properties as Record<string, string>))
