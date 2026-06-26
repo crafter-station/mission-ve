@@ -1,8 +1,8 @@
 /**
- * Brand asset generator — Misión Venezuela.
+ * Brand asset generator — Reporte VE.
  *
  * Renders the OpenGraph / Twitter share cards and the multi-size favicon from
- * the same source of truth as the app: the MissionMark glyph and the dark,
+ * the same source of truth as the app: the BrandMark glyph and the dark,
  * monochrome design tokens. Pure SVG → PNG via sharp, so output stays crisp.
  *
  * Idempotent: re-run any time the brand changes.
@@ -41,8 +41,8 @@ const CATEGORY_COLORS = [
 ];
 
 /**
- * The MissionMark glyph (square diamond pin + beacon + stem), as inner SVG.
- * Mirrors src/components/mission-mark.tsx. `t`/`s` place it inside a 24-unit
+ * The BrandMark glyph (square diamond pin + beacon + stem), as inner SVG.
+ * Mirrors src/components/brand-mark.tsx. `t`/`s` place it inside a 24-unit
  * box; `stroke`/`w` control colour and weight.
  */
 function markPaths(stroke: string, w = 1.6): string {
@@ -105,7 +105,7 @@ function cardSvg(width: number, height: number): string {
   <!-- wordmark -->
   <text x="${cx}" y="${titleY}" fill="${C.fg}"
     font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
-    font-size="60" font-weight="600" letter-spacing="-1.5">Misión Venezuela</text>
+    font-size="60" font-weight="600" letter-spacing="-1.5">Reporte VE</text>
 
   <!-- tagline -->
   <text x="${cx + 2}" y="${tagY}" fill="${C.muted}"

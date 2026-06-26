@@ -1,4 +1,4 @@
-# 🇻🇪 Misión Venezuela
+# 🇻🇪 Reporte VE
 
 **An open-source, privacy-first citizen platform for mapping service outages and
 shortages across Venezuela** — electricity and water cuts, and shortages of
