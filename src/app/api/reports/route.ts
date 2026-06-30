@@ -51,7 +51,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * GET /api/reports — public, PII-free feed of published reports for the map.
- * Accepts ?category=&severity=&estado=&sinceHours= filters.
+ * Accepts ?category=&severity=&estado= filters.
  */
 export async function GET(request: NextRequest) {
   const parsed = publicQuerySchema.safeParse(
