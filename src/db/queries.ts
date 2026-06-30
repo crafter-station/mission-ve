@@ -1,20 +1,18 @@
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import type { PublicQueryInput } from "@/lib/validations";
 import { db } from "./index";
 import { type PublicReport, type Report, reports } from "./schema";
 
 /**
- * Public map/feed query. Returns ONLY published reports with coarsened coords
- * and no PII. This is the single function the public surface is allowed to call.
+ * Public map/feed query. Returns ALL published reports with coarsened coords
+ * and no PII (no time window — everything published is always shown). This is
+ * the single function the public surface is allowed to call.
  */
 export async function getPublicReports(
   filters: PublicQueryInput,
 ): Promise<PublicReport[]> {
-  const since = new Date(Date.now() - filters.sinceHours * 60 * 60 * 1000);
-
   const where = and(
     eq(reports.status, "published"),
-    gte(reports.publishedAt, since),
     filters.category ? eq(reports.category, filters.category) : undefined,
     filters.severity ? eq(reports.severity, filters.severity) : undefined,
     filters.estado ? eq(reports.estado, filters.estado) : undefined,
